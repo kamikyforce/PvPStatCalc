@@ -5,23 +5,94 @@ namespace App\Services;
 class VisitorCounterService
 {
     private string $dataFile;
+    private string $sessionFile;
     
     public function __construct()
     {
         $this->dataFile = __DIR__ . '/../../storage/visitors.json';
+        $this->sessionFile = __DIR__ . '/../../storage/visitor_sessions.json';
         $this->ensureStorageExists();
     }
     
     public function recordVisitor(): array
     {
         $ip = $this->getClientIP();
-        $country = $this->getCountryFromIP($ip);
         
-        if ($country) {
-            $this->incrementCounter($country);
+        // Check if this IP was already counted in this session or recently
+        if ($this->isUniqueVisitor($ip)) {
+            $country = $this->getCountryFromIP($ip);
+            
+            if ($country) {
+                $this->incrementCounter($country);
+                $this->markVisitorAsCounted($ip);
+            }
         }
         
         return $this->getVisitorStats();
+    }
+    
+    private function isUniqueVisitor(string $ip): bool
+    {
+        // Check session first - if already counted in this session, skip
+        if (isset($_SESSION['visitor_counted']) && $_SESSION['visitor_counted'] === true) {
+            return false;
+        }
+        
+        // Check if IP was counted recently (within last 24 hours)
+        $sessions = $this->getVisitorSessions();
+        $currentTime = time();
+        $dayInSeconds = 24 * 60 * 60; // 24 hours
+        
+        if (isset($sessions[$ip])) {
+            $lastVisit = $sessions[$ip]['last_counted'];
+            
+            // If last visit was within 24 hours, don't count again
+            if (($currentTime - $lastVisit) < $dayInSeconds) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    private function markVisitorAsCounted(string $ip): void
+    {
+        // Mark in session
+        $_SESSION['visitor_counted'] = true;
+        
+        // Update IP tracking file
+        $sessions = $this->getVisitorSessions();
+        $sessions[$ip] = [
+            'last_counted' => time(),
+            'count' => ($sessions[$ip]['count'] ?? 0) + 1
+        ];
+        
+        // Clean old entries (older than 30 days)
+        $this->cleanOldSessions($sessions);
+        
+        file_put_contents($this->sessionFile, json_encode($sessions, JSON_PRETTY_PRINT));
+    }
+    
+    private function getVisitorSessions(): array
+    {
+        if (!file_exists($this->sessionFile)) {
+            return [];
+        }
+        
+        $data = json_decode(file_get_contents($this->sessionFile), true);
+        return $data ?: [];
+    }
+    
+    private function cleanOldSessions(array &$sessions): void
+    {
+        $currentTime = time();
+        $monthInSeconds = 30 * 24 * 60 * 60; // 30 days
+        
+        foreach ($sessions as $ip => $data) {
+            if (($currentTime - $data['last_counted']) > $monthInSeconds) {
+                unset($sessions[$ip]);
+            }
+        }
     }
     
     public function getVisitorStats(): array
@@ -151,6 +222,10 @@ class VisitorCounterService
         if (!file_exists($this->dataFile)) {
             file_put_contents($this->dataFile, '{}');
         }
+        
+        if (!file_exists($this->sessionFile)) {
+            file_put_contents($this->sessionFile, '{}');
+        }
     }
     
     public function getTotalVisitors(): int
@@ -163,5 +238,19 @@ class VisitorCounterService
     {
         $data = $this->getVisitorStats();
         return array_slice($data, 0, $limit, true);
+    }
+    
+    // Debug method to check visitor status
+    public function getVisitorStatus(): array
+    {
+        $ip = $this->getClientIP();
+        $sessions = $this->getVisitorSessions();
+        
+        return [
+            'ip' => $ip,
+            'session_counted' => $_SESSION['visitor_counted'] ?? false,
+            'ip_last_counted' => $sessions[$ip]['last_counted'] ?? null,
+            'is_unique' => $this->isUniqueVisitor($ip)
+        ];
     }
 }
