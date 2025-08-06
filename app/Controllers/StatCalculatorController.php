@@ -16,26 +16,19 @@ class StatCalculatorController
         $this->visitorCounter = new VisitorCounterService();
     }
     
-    public function index()
+    public function index(): void
     {
-        // Record visitor
-        $this->visitorCounter->recordVisitor();
+        $visitorService = new VisitorCounterService();
         
-        $data = [
-            'title' => 'Feral Druid PvP Calculator',
-            'subtitle' => 'World of Warcraft: Wrath of the Lich King (3.3.5a)',
-            'visitor_stats' => $this->visitorCounter->getTopCountries(5),
-            'total_visitors' => $this->visitorCounter->getTotalVisitors()
-        ];
+        // Record visitor and update online status
+        $visitor_stats = $visitorService->recordVisitor();
+        $visitorService->updateOnlineStatus();
         
-        // Check if we have calculation results in session
-        if (isset($_SESSION['calculation_results'])) {
-            $data = array_merge($data, $_SESSION['calculation_results']);
-            // Clear the session data after displaying
-            unset($_SESSION['calculation_results']);
-        }
+        $total_visitors = $visitorService->getTotalVisitors();
+        $online_visitors = $visitorService->getTotalOnlineVisitors();
+        $online_countries = $visitorService->getOnlineVisitorsByCountry();
         
-        return $this->renderView('calculator', $data);
+        require_once __DIR__ . '/../../resources/views/calculator.php';
     }
     
     public function processCalculation()

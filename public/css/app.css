@@ -912,3 +912,22 @@ body {
     color: black !important;
   }
 }
+
+.online-indicator {
+    color: #4CAF50;
+    font-size: 10px;
+    margin-left: 5px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.visitor-counter .online-status {
+    color: #4CAF50;
+    font-size: 12px;
+    font-weight: normal;
+}

@@ -119,3 +119,39 @@ document.addEventListener('DOMContentLoaded', function() {
         showExportButton();
     }
 });
+
+// Online visitor tracking
+function updateOnlineStatus() {
+    fetch('/api/online_status.php')
+        .then(response => response.json())
+        .then(data => {
+            // Update online count
+            const onlineCountElement = document.getElementById('online-count');
+            if (onlineCountElement) {
+                onlineCountElement.textContent = data.total_online;
+            }
+            
+            // Update online indicators for each country
+            Object.keys(data.online_countries).forEach(countryCode => {
+                const countryElement = document.querySelector(`[data-country="${countryCode}"]`);
+                if (countryElement) {
+                    const onlineIndicator = countryElement.querySelector('.online-indicator');
+                    if (onlineIndicator) {
+                        onlineIndicator.textContent = `🟢${data.online_countries[countryCode].online_count}`;
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error updating online status:', error));
+}
+
+// Update online status every 30 seconds
+setInterval(updateOnlineStatus, 30000);
+
+// Update immediately when page loads
+document.addEventListener('DOMContentLoaded', updateOnlineStatus);
+
+// Send heartbeat every 2 minutes to stay "online"
+setInterval(() => {
+    fetch('/api/online_status.php', { method: 'POST' });
+}, 120000);
