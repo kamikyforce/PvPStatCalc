@@ -16,13 +16,20 @@ class WebSocketClient {
     
     connect() {
         try {
-            // For Railway deployment, use the same host but different port
+            // For Railway deployment, use the same port as HTTP
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const host = window.location.hostname;
-            const port = window.location.port ? `:${parseInt(window.location.port) + 1}` : ':8081';
             
-            // For Railway, try the WebSocket URL
-            const wsUrl = `${protocol}//${host}${port}`;
+            // Railway uses the same port for both HTTP and WebSocket
+            let wsUrl;
+            if (host.includes('railway.app')) {
+                // Production Railway - use same port
+                wsUrl = `${protocol}//${host}`;
+            } else {
+                // Local development
+                const port = window.location.port ? `:${window.location.port}` : ':8080';
+                wsUrl = `${protocol}//${host}${port}`;
+            }
             
             console.log('🔌 Connecting to WebSocket:', wsUrl);
             

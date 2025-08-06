@@ -28,28 +28,29 @@ class WebSocketServer
         echo "🚀 WebSocket Server initialized\n";
     }
     
-    public function startServer($port = 8080)
-    {
-        $socket = new SocketServer("0.0.0.0:{$port}", $this->loop);
+    public function startServer($port = 8080) {
+        // Use environment PORT if available (Railway)
+        $port = $_ENV['PORT'] ?? $port;
         
-        $server = new HttpServer($this->loop, function (ServerRequestInterface $request) {
-            $headers = $request->getHeaders();
-            
-            // Check if it's a WebSocket upgrade request
-            if (isset($headers['upgrade'][0]) && strtolower($headers['upgrade'][0]) === 'websocket') {
+        echo "Starting WebSocket server on port {$port}...\n";
+        
+        $loop = Loop::get();
+        $socket = new SocketServer("0.0.0.0:{$port}", $loop);
+        
+        $server = new HttpServer($loop, function (ServerRequestInterface $request) {
+            // Handle WebSocket upgrade
+            if ($request->getHeaderLine('Upgrade') === 'websocket') {
                 return $this->handleWebSocketUpgrade($request);
             }
             
-            // Regular HTTP response
+            // Handle regular HTTP requests (fallback)
             return new Response(200, ['Content-Type' => 'text/plain'], 'WebSocket Server Running');
         });
         
         $server->listen($socket);
         
-        echo "🚀 WebSocket server started on port {$port}\n";
-        echo "📡 Waiting for connections...\n";
-        
-        $this->loop->run();
+        echo "WebSocket server started on ws://0.0.0.0:{$port}\n";
+        $loop->run();
     }
     
     private function handleWebSocketUpgrade(ServerRequestInterface $request)
