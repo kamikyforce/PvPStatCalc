@@ -123,5 +123,3 @@ jspm_packages/
 # DynamoDB Local files
 .dynamodb/
 
-# Add this line
-storage/visitors.json
