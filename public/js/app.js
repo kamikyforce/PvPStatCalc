@@ -158,22 +158,27 @@ setInterval(() => {
 
 
 // Real-time visitor counter with sophisticated animations
+// Real-time visitor counter with improved error handling
 class RealTimeVisitorCounter {
     constructor() {
         this.eventSource = null;
         this.isConnected = false;
         this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 5;
-        this.reconnectDelay = 1000;
+        this.maxReconnectAttempts = 10;
+        this.reconnectDelay = 2000;
         this.lastData = null;
+        this.heartbeatTimeout = null;
         
         this.init();
     }
     
     init() {
-        this.connect();
-        this.setupHeartbeat();
-        this.setupVisibilityHandler();
+        // Wait a bit before connecting to ensure page is loaded
+        setTimeout(() => {
+            this.connect();
+            this.setupHeartbeat();
+            this.setupVisibilityHandler();
+        }, 1000);
     }
     
     connect() {
@@ -183,31 +188,75 @@ class RealTimeVisitorCounter {
         
         console.log('🔄 Connecting to real-time visitor stream...');
         
-        this.eventSource = new EventSource('/api/realtime_visitors.php');
-        
-        this.eventSource.addEventListener('visitor_update', (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                this.handleVisitorUpdate(data);
+        try {
+            this.eventSource = new EventSource('/api/realtime_visitors.php');
+            
+            this.eventSource.addEventListener('visitor_update', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    this.handleVisitorUpdate(data);
+                    this.isConnected = true;
+                    this.reconnectAttempts = 0;
+                    this.resetHeartbeatTimeout();
+                } catch (error) {
+                    console.error('❌ Error parsing visitor data:', error);
+                }
+            });
+            
+            this.eventSource.addEventListener('heartbeat', (event) => {
+                console.log('💓 Heartbeat received');
+                this.resetHeartbeatTimeout();
+            });
+            
+            this.eventSource.addEventListener('error', (event) => {
+                console.error('❌ SSE Error event:', event);
+                this.handleError();
+            });
+            
+            this.eventSource.onopen = () => {
+                console.log('✅ Real-time connection established');
                 this.isConnected = true;
+                this.showConnectionStatus('connected');
                 this.reconnectAttempts = 0;
-            } catch (error) {
-                console.error('❌ Error parsing visitor data:', error);
-            }
-        });
+            };
+            
+            this.eventSource.onerror = (error) => {
+                console.error('❌ Real-time connection error:', error);
+                this.handleError();
+            };
+            
+        } catch (error) {
+            console.error('❌ Failed to create EventSource:', error);
+            this.handleError();
+        }
+    }
+    
+    handleError() {
+        this.isConnected = false;
+        this.showConnectionStatus('disconnected');
+        this.clearHeartbeatTimeout();
         
-        this.eventSource.onopen = () => {
-            console.log('✅ Real-time connection established');
-            this.isConnected = true;
-            this.showConnectionStatus('connected');
-        };
+        if (this.eventSource) {
+            this.eventSource.close();
+        }
         
-        this.eventSource.onerror = (error) => {
-            console.error('❌ Real-time connection error:', error);
-            this.isConnected = false;
-            this.showConnectionStatus('disconnected');
-            this.handleReconnect();
-        };
+        this.handleReconnect();
+    }
+    
+    resetHeartbeatTimeout() {
+        this.clearHeartbeatTimeout();
+        // If no heartbeat received in 60 seconds, reconnect
+        this.heartbeatTimeout = setTimeout(() => {
+            console.log('💔 Heartbeat timeout, reconnecting...');
+            this.handleError();
+        }, 60000);
+    }
+    
+    clearHeartbeatTimeout() {
+        if (this.heartbeatTimeout) {
+            clearTimeout(this.heartbeatTimeout);
+            this.heartbeatTimeout = null;
+        }
     }
     
     handleVisitorUpdate(data) {
@@ -225,14 +274,14 @@ class RealTimeVisitorCounter {
     
     updateTotalVisitors(newTotal) {
         const element = document.querySelector('.total-visitors');
-        if (element && element.textContent != newTotal) {
+        if (element && parseInt(element.textContent) !== newTotal) {
             this.animateNumberChange(element, newTotal);
         }
     }
     
     updateOnlineCount(newOnline) {
         const element = document.getElementById('online-count');
-        if (element && element.textContent != newOnline) {
+        if (element && parseInt(element.textContent) !== newOnline) {
             this.animateNumberChange(element, newOnline);
             
             // Pulse effect for online indicator
@@ -331,7 +380,8 @@ class RealTimeVisitorCounter {
         const indicator = document.querySelector('.connection-status');
         if (indicator) {
             indicator.className = `connection-status ${status}`;
-            indicator.textContent = status === 'connected' ? '🟢 Live' : '🔴 Reconnecting...';
+            indicator.textContent = status === 'connected' ? '🟢 Live' : 
+                                 status === 'disconnected' ? '🔴 Reconnecting...' : '⚠️ Failed';
         }
     }
     
@@ -340,9 +390,10 @@ class RealTimeVisitorCounter {
             this.reconnectAttempts++;
             console.log(`🔄 Reconnecting... Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
             
+            const delay = this.reconnectDelay * Math.min(this.reconnectAttempts, 5); // Max 10 second delay
             setTimeout(() => {
                 this.connect();
-            }, this.reconnectDelay * this.reconnectAttempts);
+            }, delay);
         } else {
             console.error('❌ Max reconnection attempts reached');
             this.showConnectionStatus('failed');
@@ -367,12 +418,14 @@ class RealTimeVisitorCounter {
         document.addEventListener('visibilitychange', () => {
             if (!document.hidden && !this.isConnected) {
                 console.log('🔄 Tab visible again, reconnecting...');
+                this.reconnectAttempts = 0; // Reset attempts when tab becomes visible
                 this.connect();
             }
         });
     }
     
     disconnect() {
+        this.clearHeartbeatTimeout();
         if (this.eventSource) {
             this.eventSource.close();
             this.isConnected = false;
