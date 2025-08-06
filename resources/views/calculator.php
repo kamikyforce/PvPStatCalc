@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title ?? 'PvP Calculator') ?></title>
     <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/websocket-styles.css">
 </head>
 <body>
     <!-- Navigation Bar -->
@@ -13,10 +14,10 @@
             <li><a href="/" title="Calculator" class="active">CALCULATOR</a></li>
             <!-- <li><a href="/macros" title="Macros & WoW Guides">MACROS & GUIDES</a></li> -->
         </ul>
+        <div class="ws-status" title="WebSocket Connection"></div>
     </nav>
 
-    <!-- Visitor Counter - moved below navbar -->
-    <!-- Visitor Counter with Real-Time Updates -->
+    <!-- Enhanced Visitor Counter with WebSocket -->
     <div class="visitor-counter">
         <div class="visitor-header">
             <div style="text-align: center; margin-bottom: 8px;">
@@ -26,8 +27,22 @@
                     🟢 <span id="online-count"><?= $online_visitors ?? 0 ?></span> online now
                 </span>
             </div>
-            <div class="connection-status connected">🟢 Live</div>
+            <div class="connection-status connected">
+                🟢 Live <span class="connection-latency">0ms</span>
+            </div>
             <div class="last-update">Last update: <?= date('H:i:s') ?></div>
+        </div>
+        
+        <!-- Real-time Statistics -->
+        <div class="realtime-stats">
+            <div class="stat-item">
+                <div class="stat-value" id="active-users">0</div>
+                <div class="stat-label">Active</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="countries-online">0</div>
+                <div class="stat-label">Countries</div>
+            </div>
         </div>
         
         <div class="visitor-list">
@@ -68,5 +83,6 @@
     </div>
     
     <script src="/js/app.js"></script>
+    <script src="/js/websocket-client.js"></script>
 </body>
 </html>
