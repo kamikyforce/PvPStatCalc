@@ -16,28 +16,36 @@
     </nav>
 
     <!-- Visitor Counter - moved below navbar -->
-    <!-- Visitor Counter -->
+    <!-- Visitor Counter with Real-Time Updates -->
     <div class="visitor-counter">
-        <div style="text-align: center; margin-bottom: 8px;">
-            <strong>Visitors: <?= $total_visitors ?? 0 ?></strong>
-            <br>
-            <span style="color: #4CAF50; font-size: 12px;">
-                🟢 <span id="online-count"><?= $online_visitors ?? 0 ?></span> online now
-            </span>
+        <div class="visitor-header">
+            <div style="text-align: center; margin-bottom: 8px;">
+                <strong>Visitors: <span class="total-visitors"><?= $total_visitors ?? 0 ?></span></strong>
+                <br>
+                <span class="online-status">
+                    🟢 <span id="online-count"><?= $online_visitors ?? 0 ?></span> online now
+                </span>
+            </div>
+            <div class="connection-status connected">🟢 Live</div>
+            <div class="last-update">Last update: <?= date('H:i:s') ?></div>
         </div>
         
-        <?php if (!empty($visitor_stats)): ?>
-            <?php foreach ($visitor_stats as $countryCode => $country): ?>
-                <div style="display: flex; align-items: center; margin: 2px 0;">
-                    <span style="font-size: 16px; margin-right: 5px;"><?= $country['flag'] ?></span>
-                    <span style="flex: 1;"><?= htmlspecialchars($country['name']) ?></span>
-                    <span style="font-weight: bold; margin-left: 5px;"><?= $country['count'] ?></span>
-                    <?php if (isset($online_countries[$countryCode]) && $online_countries[$countryCode]['online_count'] > 0): ?>
-                        <span style="color: #4CAF50; margin-left: 5px; font-size: 10px;">🟢<?= $online_countries[$countryCode]['online_count'] ?></span>
-                    <?php endif; ?>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
+        <div class="visitor-list">
+            <?php if (!empty($visitor_stats)): ?>
+                <?php foreach ($visitor_stats as $countryCode => $country): ?>
+                    <div class="country-item" data-country="<?= $countryCode ?>">
+                        <div style="display: flex; align-items: center; margin: 2px 0;">
+                            <span style="font-size: 16px; margin-right: 5px;"><?= $country['flag'] ?></span>
+                            <span style="flex: 1;"><?= htmlspecialchars($country['name']) ?></span>
+                            <span style="font-weight: bold; margin-left: 5px;"><?= $country['count'] ?></span>
+                            <?php if (isset($online_countries[$countryCode]) && $online_countries[$countryCode]['online_count'] > 0): ?>
+                                <span class="online-indicator animate-pulse">🟢<?= $online_countries[$countryCode]['online_count'] ?></span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
     </div>
 
     <div class="container">

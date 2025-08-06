@@ -155,3 +155,239 @@ document.addEventListener('DOMContentLoaded', updateOnlineStatus);
 setInterval(() => {
     fetch('/api/online_status.php', { method: 'POST' });
 }, 120000);
+
+
+// Real-time visitor counter with sophisticated animations
+class RealTimeVisitorCounter {
+    constructor() {
+        this.eventSource = null;
+        this.isConnected = false;
+        this.reconnectAttempts = 0;
+        this.maxReconnectAttempts = 5;
+        this.reconnectDelay = 1000;
+        this.lastData = null;
+        
+        this.init();
+    }
+    
+    init() {
+        this.connect();
+        this.setupHeartbeat();
+        this.setupVisibilityHandler();
+    }
+    
+    connect() {
+        if (this.eventSource) {
+            this.eventSource.close();
+        }
+        
+        console.log('🔄 Connecting to real-time visitor stream...');
+        
+        this.eventSource = new EventSource('/api/realtime_visitors.php');
+        
+        this.eventSource.addEventListener('visitor_update', (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                this.handleVisitorUpdate(data);
+                this.isConnected = true;
+                this.reconnectAttempts = 0;
+            } catch (error) {
+                console.error('❌ Error parsing visitor data:', error);
+            }
+        });
+        
+        this.eventSource.onopen = () => {
+            console.log('✅ Real-time connection established');
+            this.isConnected = true;
+            this.showConnectionStatus('connected');
+        };
+        
+        this.eventSource.onerror = (error) => {
+            console.error('❌ Real-time connection error:', error);
+            this.isConnected = false;
+            this.showConnectionStatus('disconnected');
+            this.handleReconnect();
+        };
+    }
+    
+    handleVisitorUpdate(data) {
+        // Animate counter changes
+        this.updateTotalVisitors(data.total_visitors);
+        this.updateOnlineCount(data.total_online);
+        this.updateVisitorList(data.visitor_stats, data.online_countries);
+        
+        // Store last data for comparison
+        this.lastData = data;
+        
+        // Show last update time
+        this.updateTimestamp(data.timestamp);
+    }
+    
+    updateTotalVisitors(newTotal) {
+        const element = document.querySelector('.total-visitors');
+        if (element && element.textContent != newTotal) {
+            this.animateNumberChange(element, newTotal);
+        }
+    }
+    
+    updateOnlineCount(newOnline) {
+        const element = document.getElementById('online-count');
+        if (element && element.textContent != newOnline) {
+            this.animateNumberChange(element, newOnline);
+            
+            // Pulse effect for online indicator
+            const onlineIndicator = element.closest('.online-status');
+            if (onlineIndicator) {
+                onlineIndicator.classList.add('pulse-animation');
+                setTimeout(() => onlineIndicator.classList.remove('pulse-animation'), 1000);
+            }
+        }
+    }
+    
+    updateVisitorList(visitorStats, onlineCountries) {
+        const container = document.querySelector('.visitor-list');
+        if (!container) return;
+        
+        // Clear existing list
+        container.innerHTML = '';
+        
+        // Rebuild list with animations
+        Object.entries(visitorStats).forEach(([countryCode, country], index) => {
+            const countryElement = this.createCountryElement(countryCode, country, onlineCountries[countryCode]);
+            
+            // Stagger animations
+            setTimeout(() => {
+                countryElement.style.opacity = '0';
+                countryElement.style.transform = 'translateX(-20px)';
+                container.appendChild(countryElement);
+                
+                // Animate in
+                requestAnimationFrame(() => {
+                    countryElement.style.transition = 'all 0.3s ease';
+                    countryElement.style.opacity = '1';
+                    countryElement.style.transform = 'translateX(0)';
+                });
+            }, index * 50);
+        });
+    }
+    
+    createCountryElement(countryCode, country, onlineData) {
+        const div = document.createElement('div');
+        div.className = 'country-item';
+        div.setAttribute('data-country', countryCode);
+        
+        const onlineCount = onlineData ? onlineData.online_count : 0;
+        const onlineIndicator = onlineCount > 0 ? 
+            `<span class="online-indicator animate-pulse">🟢${onlineCount}</span>` : '';
+        
+        div.innerHTML = `
+            <div style="display: flex; align-items: center; margin: 2px 0;">
+                <span style="font-size: 16px; margin-right: 5px;">${country.flag}</span>
+                <span style="flex: 1;">${country.name}</span>
+                <span style="font-weight: bold; margin-left: 5px;">${country.count}</span>
+                ${onlineIndicator}
+            </div>
+        `;
+        
+        return div;
+    }
+    
+    animateNumberChange(element, newValue) {
+        const oldValue = parseInt(element.textContent) || 0;
+        
+        if (oldValue === newValue) return;
+        
+        // Add change animation class
+        element.classList.add('number-change');
+        
+        // Animate the number counting up/down
+        const duration = 500;
+        const steps = 20;
+        const stepValue = (newValue - oldValue) / steps;
+        let currentStep = 0;
+        
+        const interval = setInterval(() => {
+            currentStep++;
+            const currentValue = Math.round(oldValue + (stepValue * currentStep));
+            element.textContent = currentValue;
+            
+            if (currentStep >= steps) {
+                clearInterval(interval);
+                element.textContent = newValue;
+                element.classList.remove('number-change');
+            }
+        }, duration / steps);
+    }
+    
+    updateTimestamp(timestamp) {
+        const element = document.querySelector('.last-update');
+        if (element) {
+            const date = new Date(timestamp * 1000);
+            element.textContent = `Last update: ${date.toLocaleTimeString()}`;
+        }
+    }
+    
+    showConnectionStatus(status) {
+        const indicator = document.querySelector('.connection-status');
+        if (indicator) {
+            indicator.className = `connection-status ${status}`;
+            indicator.textContent = status === 'connected' ? '🟢 Live' : '🔴 Reconnecting...';
+        }
+    }
+    
+    handleReconnect() {
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.reconnectAttempts++;
+            console.log(`🔄 Reconnecting... Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
+            
+            setTimeout(() => {
+                this.connect();
+            }, this.reconnectDelay * this.reconnectAttempts);
+        } else {
+            console.error('❌ Max reconnection attempts reached');
+            this.showConnectionStatus('failed');
+        }
+    }
+    
+    setupHeartbeat() {
+        // Send heartbeat every 30 seconds to maintain online status
+        setInterval(() => {
+            if (this.isConnected) {
+                fetch('/api/online_status.php', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ heartbeat: true })
+                }).catch(error => console.error('Heartbeat failed:', error));
+            }
+        }, 30000);
+    }
+    
+    setupVisibilityHandler() {
+        // Reconnect when tab becomes visible again
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && !this.isConnected) {
+                console.log('🔄 Tab visible again, reconnecting...');
+                this.connect();
+            }
+        });
+    }
+    
+    disconnect() {
+        if (this.eventSource) {
+            this.eventSource.close();
+            this.isConnected = false;
+        }
+    }
+}
+
+// Initialize real-time visitor counter when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    window.visitorCounter = new RealTimeVisitorCounter();
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    if (window.visitorCounter) {
+        window.visitorCounter.disconnect();
+    }
+});
