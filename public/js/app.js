@@ -1,5 +1,19 @@
 function resetForm() {
-    document.getElementById('statForm').reset();
+    const form = document.getElementById('statForm');
+    form.reset();
+    
+    // Explicitly clear all input values
+    const inputs = form.querySelectorAll('input[type="number"]');
+    inputs.forEach(input => {
+        input.value = '';
+        input.setCustomValidity('');
+    });
+    
+    // Hide export button
+    const exportBtn = document.getElementById('exportBtn');
+    if (exportBtn) {
+        exportBtn.style.display = 'none';
+    }
     
     // Remove any existing results
     const resultDiv = document.querySelector('.result');

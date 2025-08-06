@@ -4,19 +4,23 @@
         $fields = [
             'agility' => [
                 'label' => 'Agility', 
-                'tooltip' => '<strong>Agility (WotLK 3.3.5a)</strong><br><div class="tooltip-formula">• 1 AGI = 1 Attack Power</div><div class="tooltip-formula">• ~63.5 AGI = 1% Crit</div><div class="tooltip-formula">• 1 AGI = 2 Armor</div><div class="tooltip-effect">For Feral Druids, agility is the primary stat that increases damage, crit chance, and armor simultaneously.</div>'
+                'tooltip' => '<strong>Agility (WotLK 3.3.5a)</strong><br><div class="tooltip-formula">• 1 AGI = 1 Attack Power</div><div class="tooltip-formula">• ~63.5 AGI = 1% Crit</div><div class="tooltip-formula">• 1 AGI = 2 Armor</div><div class="tooltip-effect">For Feral Druids, agility is the primary stat that increases damage, crit chance, and armor simultaneously.</div>',
+                'placeholder' => 'e.g. 2003'
             ],
             'strength' => [
                 'label' => 'Strength', 
-                'tooltip' => '<strong>Strength (WotLK 3.3.5a)</strong><br><div class="tooltip-formula">• 1 STR = 2 Attack Power</div><div class="tooltip-effect">For Feral Druids, strength provides additional attack power but is secondary compared to agility.</div>'
+                'tooltip' => '<strong>Strength (WotLK 3.3.5a)</strong><br><div class="tooltip-formula">• 1 STR = 2 Attack Power</div><div class="tooltip-effect">For Feral Druids, strength provides additional attack power but is secondary compared to agility.</div>',
+                'placeholder' => 'e.g. 95'
             ],
             'base_ap' => [
                 'label' => 'Attack Power (base)', 
-                'tooltip' => '<strong>Base Attack Power</strong><br><div class="tooltip-formula">• 14 AP = 1 DPS</div><div class="tooltip-effect">The character\'s base attack power before attribute bonuses. Directly increases physical attack damage.</div>'
+                'tooltip' => '<strong>Base Attack Power</strong><br><div class="tooltip-formula">• 14 AP = 1 DPS</div><div class="tooltip-effect">The character\'s base attack power before attribute bonuses. Directly increases physical attack damage.</div>',
+                'placeholder' => 'e.g. 2294'
             ],
             'arp' => [
                 'label' => 'Armor Penetration Rating', 
-                'tooltip' => '<strong>Armor Penetration (WotLK 3.3.5a)</strong><br><div class="tooltip-formula">• 13.99 Rating = 1% Penetration</div><div class="tooltip-effect">Ignores a percentage of the target\'s armor. Very effective against high-armor targets. After patch 3.1, effectiveness increased by 25%.</div>'
+                'tooltip' => '<strong>Armor Penetration (WotLK 3.3.5a)</strong><br><div class="tooltip-formula">• 13.99 Rating = 1% Penetration</div><div class="tooltip-effect">Ignores a percentage of the target\'s armor. Very effective against high-armor targets. After patch 3.1, effectiveness increased by 25%.</div>',
+                'placeholder' => 'e.g. 415'
             ],
             'resilience' => [
                 'label' => 'Resilience Rating', 
@@ -25,11 +29,13 @@
             ],
             'stamina' => [
                 'label' => 'Stamina', 
-                'tooltip' => '<strong>Stamina (WotLK 3.3.5a)</strong><br><div class="tooltip-formula">• 1 STA = 10 Health (level 80)</div><div class="tooltip-effect">Increases maximum health points. Essential for survivability in both PvP and PvE.</div>'
+                'tooltip' => '<strong>Stamina (WotLK 3.3.5a)</strong><br><div class="tooltip-formula">• 1 STA = 10 Health (level 80)</div><div class="tooltip-effect">Increases maximum health points. Essential for survivability in both PvP and PvE.</div>',
+                'placeholder' => 'e.g. 1895'
             ],
             'hit' => [
                 'label' => 'Hit Rating', 
-                'tooltip' => '<strong>Hit Rating (WotLK 3.3.5a)</strong><br><div class="tooltip-formula">• 32.79 Rating = 1% Physical Hit</div><div class="tooltip-formula">• 26.23 Rating = 1% Spell Hit</div><div class="tooltip-effect">Reduces chance to miss attacks. Cap: 8% vs raid bosses (263 rating), 5% vs players (164 rating).</div>'
+                'tooltip' => '<strong>Hit Rating (WotLK 3.3.5a)</strong><br><div class="tooltip-formula">• 32.79 Rating = 1% Physical Hit</div><div class="tooltip-formula">• 26.23 Rating = 1% Spell Hit</div><div class="tooltip-effect">Reduces chance to miss attacks. Cap: 8% vs raid bosses (263 rating), 5% vs players (164 rating).</div>',
+                'placeholder' => 'e.g. 168'
             ],
             'expertise' => [
                 'label' => 'Expertise (Points)', 
@@ -67,7 +73,7 @@
             Calculate Stats
         </button>
         <button type="button" class="btn btn-secondary" id="exportBtn" onclick="exportToJson()" style="display: none;">
-            📥 Export JSON
+            ⬇ Export JSON
         </button>
         <button type="button" class="reset-btn" onclick="resetForm()">
             Reset

@@ -51,8 +51,9 @@ if (preg_match('/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/i', $re
 // Application routing
 try {
     require_once __DIR__ . '/../app/Services/StatCalculatorService.php';
-    require_once __DIR__ . '/../app/Services/VisitorCounterService.php'; // ADD THIS LINE
+    require_once __DIR__ . '/../app/Services/VisitorCounterService.php';
     require_once __DIR__ . '/../app/Controllers/StatCalculatorController.php';
+    require_once __DIR__ . '/../app/Controllers/MacrosController.php';
     
     $service = new \App\Services\StatCalculatorService();
     $controller = new \App\Controllers\StatCalculatorController($service);
@@ -65,6 +66,10 @@ try {
             // Show form or results via GET
             echo $controller->index();
         }
+    } elseif ($requestUri === '/macros') {
+        // Página simples de macros
+        $macrosController = new MacrosController();
+        $macrosController->index();
     } elseif ($requestUri === '/export' && $requestMethod === 'POST') {
         $controller->exportJson();
     } else {

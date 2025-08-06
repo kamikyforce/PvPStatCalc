@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($title ?? 'PvP Calculator') ?></title>
+    <title>Macros & Guides - PvP Calculator</title>
     <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
     <!-- Navigation Bar -->
     <nav class="navigation">
         <ul class="navbits">
-            <li><a href="/" title="Calculator" class="active">CALCULATOR</a></li>
-            <!-- <li><a href="/macros" title="Macros & WoW Guides">MACROS & GUIDES</a></li> -->
+            <li><a href="/" title="Calculator">CALCULATOR</a></li>
+            <li><a href="/macros" title="Macros & WoW Guides" class="active">MACROS & GUIDES</a></li>
         </ul>
     </nav>
 
-    <!-- Visitor Counter - moved below navbar -->
+    <!-- Visitor Counter -->
     <div class="visitor-counter">
         <div style="text-align: center; margin-bottom: 8px;">
             <strong>🌍 Visitors: <?= $total_visitors ?? 0 ?></strong>
@@ -33,23 +33,15 @@
 
     <div class="container">
         <div class="header">
-            <h1><?= htmlspecialchars($title ?? 'PvP Calculator') ?></h1>
-            <p class="subtitle"><?= htmlspecialchars($subtitle ?? '') ?></p>
+            <h1>Macros & Guides</h1>
+            <p class="subtitle">Coming soon: Macros and guides for WoW</p>
         </div>
 
-        <?php include 'partials/form.php'; ?>
-        
-        <?php if (isset($error)): ?>
-            <div class="alert alert-error">
-                <?= htmlspecialchars($error) ?>
-            </div>
-        <?php endif; ?>
-        
-        <?php if (isset($stats)): ?>
-            <?php include 'partials/results.php'; ?>
-        <?php endif; ?>
+        <div style="text-align: center; padding: 60px 20px; color: #888;">
+            <h2 style="color: #fff; margin-bottom: 20px;">🚧 Under Development</h2>
+            <p>This section will be available soon with macros and guides for World of Warcraft.</p>
+            <p>Check back soon for new content!</p>
+        </div>
     </div>
-    
-    <script src="/js/app.js"></script>
 </body>
 </html>
