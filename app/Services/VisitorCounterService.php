@@ -18,6 +18,11 @@ class VisitorCounterService
     {
         $ip = $this->getClientIP();
         
+        // Skip local/private IPs entirely - don't process them at all
+        if ($this->isLocalIP($ip)) {
+            return $this->getVisitorStats();
+        }
+        
         // Check if this IP was already counted in this session or recently
         if ($this->isUniqueVisitor($ip)) {
             $country = $this->getCountryFromIP($ip);
@@ -121,13 +126,16 @@ class VisitorCounterService
         return $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
     }
     
+    private function isLocalIP(string $ip): bool
+    {
+        // Check for localhost and private IP ranges
+        return $ip === '127.0.0.1' || 
+               $ip === '::1' || 
+               !filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
+    }
+    
     private function getCountryFromIP(string $ip): ?array
     {
-        // Skip localhost/private IPs - return null to prevent counting
-        if ($ip === '127.0.0.1' || !filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-            return null;
-        }
-        
         try {
             // Using ip-api.com (free, no key required, 1000 requests/month)
             $url = "http://ip-api.com/json/{$ip}?fields=status,country,countryCode";
