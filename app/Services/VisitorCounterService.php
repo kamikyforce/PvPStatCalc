@@ -261,4 +261,26 @@ class VisitorCounterService
             'is_unique' => $this->isUniqueVisitor($ip)
         ];
     }
+    
+    public function purgeLocalVisitors(): void
+    {
+        // Clean visitors.json - remove LOCAL entries
+        $data = $this->getVisitorStats();
+        if (isset($data['LOCAL'])) {
+            unset($data['LOCAL']);
+            file_put_contents($this->dataFile, json_encode($data, JSON_PRETTY_PRINT));
+        }
+        
+        // Clean visitor_sessions.json - remove local IP sessions
+        $sessions = $this->getVisitorSessions();
+        $cleanedSessions = [];
+        
+        foreach ($sessions as $ip => $sessionData) {
+            if (!$this->isLocalIP($ip)) {
+                $cleanedSessions[$ip] = $sessionData;
+            }
+        }
+        
+        file_put_contents($this->sessionFile, json_encode($cleanedSessions, JSON_PRETTY_PRINT));
+    }
 }

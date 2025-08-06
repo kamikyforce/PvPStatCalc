@@ -18,7 +18,7 @@
     <!-- Visitor Counter - moved below navbar -->
     <div class="visitor-counter">
         <div style="text-align: center; margin-bottom: 8px;">
-            <strong>🌍 Visitors: <?= $total_visitors ?? 0 ?></strong>
+            <strong>Visitors: <?= $total_visitors ?? 0 ?></strong>
         </div>
         <?php if (!empty($visitor_stats)): ?>
             <?php foreach ($visitor_stats as $country): ?>
