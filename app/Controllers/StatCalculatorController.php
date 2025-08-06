@@ -3,21 +3,29 @@
 namespace App\Controllers;
 
 use App\Services\StatCalculatorService;
+use App\Services\VisitorCounterService;
 
 class StatCalculatorController
 {
     private StatCalculatorService $statCalculator;
+    private VisitorCounterService $visitorCounter;
     
     public function __construct(StatCalculatorService $statCalculator)
     {
         $this->statCalculator = $statCalculator;
+        $this->visitorCounter = new VisitorCounterService();
     }
     
     public function index()
     {
+        // Record visitor
+        $this->visitorCounter->recordVisitor();
+        
         $data = [
             'title' => 'Feral Druid PvP Calculator',
-            'subtitle' => 'World of Warcraft: Wrath of the Lich King (3.3.5a)'
+            'subtitle' => 'World of Warcraft: Wrath of the Lich King (3.3.5a)',
+            'visitor_stats' => $this->visitorCounter->getTopCountries(5),
+            'total_visitors' => $this->visitorCounter->getTotalVisitors()
         ];
         
         // Check if we have calculation results in session

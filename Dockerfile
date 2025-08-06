@@ -33,3 +33,6 @@ EXPOSE 80
 
 # Start Apache
 CMD ["apache2-foreground"]
+
+# Add this line after COPY . /var/www/html/
+RUN mkdir -p /var/www/html/storage && chown -R www-data:www-data /var/www/html/storage
