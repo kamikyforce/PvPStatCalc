@@ -5,7 +5,7 @@ services:
     image: php:8.2-fpm
     container_name: feral_php
     volumes:
-      - ./src:/var/www/html
+      - ./:/var/www/html
     networks:
       - feral-net
 
@@ -17,7 +17,7 @@ services:
     ports:
       - 8080:80
     volumes:
-      - ./src:/var/www/html
+      - ./:/var/www/html
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - feral-net
