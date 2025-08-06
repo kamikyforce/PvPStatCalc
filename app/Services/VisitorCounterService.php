@@ -123,9 +123,9 @@ class VisitorCounterService
     
     private function getCountryFromIP(string $ip): ?array
     {
-        // Skip localhost/private IPs
-        if ($ip === '127.0.0.1' || !filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE)) {
-            return ['code' => 'LOCAL', 'name' => 'Local', 'flag' => '🏠'];
+        // Skip localhost/private IPs - return null to prevent counting
+        if ($ip === '127.0.0.1' || !filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+            return null;
         }
         
         try {
