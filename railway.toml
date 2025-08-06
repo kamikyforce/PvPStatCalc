@@ -2,8 +2,13 @@
 builder = "dockerfile"
 
 [deploy]
-startCommand = "bash -c 'php websocket_server.php $PORT & apache2-foreground'"
+startCommand = "apache2-foreground"
 restartPolicyType = "always"
+
+# WebSocket service configuration
+[[services]]
+name = "websocket-server"
+startCommand = "php websocket_server.php $PORT"
 
 [variables]
 PORT = "8080"
