@@ -4,6 +4,9 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
+// Start session for POST-Redirect-GET pattern
+session_start();
+
 // Autoloader for classes
 spl_autoload_register(function ($class) {
     $class = str_replace('\\', '/', $class);
@@ -55,8 +58,10 @@ try {
     
     if ($requestUri === '/' || $requestUri === '/index.php') {
         if ($requestMethod === 'POST') {
-            echo $controller->calculate();
+            // Process POST and redirect to GET (POST-Redirect-GET pattern)
+            $controller->processCalculation();
         } else {
+            // Show form or results via GET
             echo $controller->index();
         }
     } elseif ($requestUri === '/export' && $requestMethod === 'POST') {

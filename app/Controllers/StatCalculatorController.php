@@ -15,38 +15,51 @@ class StatCalculatorController
     
     public function index()
     {
-        return $this->renderView('calculator', [
+        $data = [
             'title' => 'Feral Druid PvP Calculator',
             'subtitle' => 'World of Warcraft: Wrath of the Lich King (3.3.5a)'
-        ]);
-    }
-    
-    public function calculate()
-    {
-        if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-            return $this->index();
+        ];
+        
+        // Check if we have calculation results in session
+        if (isset($_SESSION['calculation_results'])) {
+            $data = array_merge($data, $_SESSION['calculation_results']);
+            // Clear the session data after displaying
+            unset($_SESSION['calculation_results']);
         }
         
+        return $this->renderView('calculator', $data);
+    }
+    
+    public function processCalculation()
+    {
         try {
             $input = $this->validateAndSanitizeInput();
             $stats = $this->statCalculator->calculateStats($input);
             $warnings = $this->statCalculator->validateInput($input);
             
-            return $this->renderView('calculator', [
-                'title' => 'Feral Druid PvP Calculator',
-                'subtitle' => 'World of Warcraft: Wrath of the Lich King (3.3.5a)',
+            // Store results in session
+            $_SESSION['calculation_results'] = [
                 'stats' => $stats,
                 'warnings' => $warnings,
                 'input' => $input
-            ]);
+            ];
             
         } catch (\Exception $e) {
-            return $this->renderView('calculator', [
-                'title' => 'Feral Druid PvP Calculator',
-                'subtitle' => 'World of Warcraft: Wrath of the Lich King (3.3.5a)',
+            // Store error in session
+            $_SESSION['calculation_results'] = [
                 'error' => $e->getMessage()
-            ]);
+            ];
         }
+        
+        // Redirect to GET to prevent resubmission
+        header('Location: /', true, 303);
+        exit;
+    }
+    
+    public function calculate()
+    {
+        // This method is now deprecated, keeping for compatibility
+        return $this->processCalculation();
     }
     
     public function exportJson()
