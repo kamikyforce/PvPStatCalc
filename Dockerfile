@@ -1,10 +1,28 @@
 FROM php:8.2-apache
 
+# Install system dependencies and Composer
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
 # Install required PHP extensions
 RUN docker-php-ext-install pdo pdo_mysql
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy composer files first for better Docker layer caching
+COPY composer.json composer.lock* ./
+
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Copy application files
 COPY . /var/www/html/
@@ -13,7 +31,12 @@ COPY . /var/www/html/
 RUN chown -R www-data:www-data /var/www/html
 RUN chmod -R 755 /var/www/html
 
-# Create Apache configuration
+# Create storage directory and set permissions
+RUN mkdir -p /var/www/html/storage && chown -R www-data:www-data /var/www/html/storage
+
+# Create Apache configuration with ServerName to suppress the warning
+RUN echo 'ServerName localhost' >> /etc/apache2/apache2.conf
+
 RUN echo '<VirtualHost *:80>\n\
     DocumentRoot /var/www/html/public\n\
     <Directory /var/www/html/public>\n\
@@ -33,6 +56,3 @@ EXPOSE 80
 
 # Start Apache
 CMD ["apache2-foreground"]
-
-# Add this line after COPY . /var/www/html/
-RUN mkdir -p /var/www/html/storage && chown -R www-data:www-data /var/www/html/storage
