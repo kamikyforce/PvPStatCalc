@@ -7,14 +7,11 @@ ini_set('log_errors', 1);
 // Start session for POST-Redirect-GET pattern
 session_start();
 
-// Autoloader for classes
-spl_autoload_register(function ($class) {
-    $class = str_replace('\\', '/', $class);
-    $file = __DIR__ . '/../' . $class . '.php';
-    if (file_exists($file)) {
-        require_once $file;
-    }
-});
+// Load Composer autoloader
+require_once __DIR__ . '/../vendor/autoload.php';
+
+// Bootstrap Laravel components
+$app = require_once __DIR__ . '/../bootstrap/app.php';
 
 // Get request info
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -50,10 +47,6 @@ if (preg_match('/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/i', $re
 
 // Application routing
 try {
-    require_once __DIR__ . '/../app/Services/StatCalculatorService.php';
-    require_once __DIR__ . '/../app/Controllers/StatCalculatorController.php';
-    require_once __DIR__ . '/../app/Controllers/MacrosController.php';
-    
     $service = new \App\Services\StatCalculatorService();
     $controller = new \App\Controllers\StatCalculatorController($service);
     
@@ -70,7 +63,7 @@ try {
         $macrosController = new MacrosController();
         $macrosController->index();
     } elseif ($requestUri === '/export' && $requestMethod === 'POST') {
-        $controller->exportJson();
+        $controller->export();
     } else {
         http_response_code(404);
         echo '404 - Page Not Found';

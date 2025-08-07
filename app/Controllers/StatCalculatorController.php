@@ -3,193 +3,208 @@
 namespace App\Controllers;
 
 use App\Services\StatCalculatorService;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\ViewErrorBag;
+use Illuminate\Support\MessageBag;
 
 class StatCalculatorController
 {
-    private StatCalculatorService $statCalculator;
-    
+    private $statCalculator;
+
     public function __construct(StatCalculatorService $statCalculator)
     {
         $this->statCalculator = $statCalculator;
     }
-    
-    public function index(): void
+
+    public function index()
     {
-        // Extract calculation results from session if available
-        $stats = null;
-        $warnings = null;
-        $input = null;
-        $error = null;
+        // Get and clear session data
+        $stats = $_SESSION['stats'] ?? null;
+        $input = $_SESSION['input'] ?? [];
+        $message = $_SESSION['message'] ?? null;
+        $error = $_SESSION['error'] ?? null;
+        $sessionErrors = $_SESSION['errors'] ?? [];
         
-        if (isset($_SESSION['calculation_results'])) {
-            $results = $_SESSION['calculation_results'];
-            
-            if (isset($results['error'])) {
-                $error = $results['error'];
-            } else {
-                $stats = $results['stats'] ?? null;
-                $warnings = $results['warnings'] ?? null;
-                $input = $results['input'] ?? null;
+        // Clear session data
+        unset($_SESSION['stats'], $_SESSION['input'], $_SESSION['message'], $_SESSION['error'], $_SESSION['errors']);
+        
+        // Create errors object for Blade
+        $errors = new ViewErrorBag();
+        if (!empty($sessionErrors)) {
+            $messageBag = new MessageBag();
+            foreach ($sessionErrors as $field => $fieldErrors) {
+                foreach ($fieldErrors as $errorMessage) {
+                    $messageBag->add($field, $errorMessage);
+                }
             }
-            
-            // Clear session data after use to prevent stale results
-            unset($_SESSION['calculation_results']);
+            $errors->put('default', $messageBag);
         }
         
-        // Set page title and subtitle
-        $title = 'PvP Calculator';
-        $subtitle = 'WotLK 3.3.5a Feral Druid Statistics Calculator';
-        
-        require_once __DIR__ . '/../../resources/views/calculator.php';
+        return View::make('calculator', compact('stats', 'input', 'message', 'error', 'errors'));
     }
-    
+
     public function processCalculation()
     {
         try {
-            $input = $this->validateAndSanitizeInput();
-            $stats = $this->statCalculator->calculateStats($input);
-            $warnings = $this->statCalculator->validateInput($input);
+            $data = $_POST;
             
-            // Store results in session
-            $_SESSION['calculation_results'] = [
-                'stats' => $stats,
-                'warnings' => $warnings,
-                'input' => $input
-            ];
+            // Validate input data
+            $validation = $this->validateInput($data);
             
-        } catch (\Exception $e) {
-            // Store error in session
-            $_SESSION['calculation_results'] = [
-                'error' => $e->getMessage()
-            ];
-        }
-        
-        // Redirect back to prevent form resubmission
-        header('Location: /');
-        exit;
-    }
-    
-    public function calculate()
-    {
-        // This method is now deprecated, keeping for compatibility
-        return $this->processCalculation();
-    }
-    
-    public function exportJson()
-    {
-        if ($_SERVER["REQUEST_METHOD"] !== "POST") {
-            http_response_code(405);
-            echo json_encode(['error' => 'Method not allowed']);
-            return;
-        }
-        
-        try {
-            $input = $this->validateAndSanitizeInput();
-            $stats = $this->statCalculator->calculateStats($input);
-            
-            // Predefined JSON structure for character build export
-            $exportData = [
-                'metadata' => [
-                    'version' => '1.0',
-                    'game_version' => 'WotLK 3.3.5a',
-                    'class' => 'Druid',
-                    'spec' => 'Feral',
-                    'calculator' => 'PvP Stat Calculator',
-                    'exported_at' => date('Y-m-d H:i:s'),
-                    'timestamp' => time()
-                ],
-                'character' => [
-                    'level' => 80,
-                    'class' => 'Druid',
-                    'specialization' => 'Feral',
-                    'race' => null // Can be extended later
-                ],
-                'base_stats' => [
-                    'agility' => (int)$input['agility'],
-                    'strength' => (int)$input['strength'],
-                    'stamina' => (int)$input['stamina'],
-                    'base_attack_power' => (int)$input['base_ap']
-                ],
-                'combat_ratings' => [
-                    'hit_rating' => (int)$input['hit'],
-                    'critical_strike_rating' => (int)$input['crit_rating'],
-                    'armor_penetration_rating' => (int)$input['arp'],
-                    'resilience_rating' => (int)$input['resilience'],
-                    'expertise_points' => (int)$input['expertise']
-                ],
-                'calculated_stats' => [
-                    'total_attack_power' => (int)$stats['total_ap'],
-                    'attack_power_breakdown' => [
-                        'base' => (int)$input['base_ap'],
-                        'from_agility' => (int)$stats['ap_from_agi'],
-                        'from_strength' => (int)$stats['ap_from_str']
-                    ],
-                    'critical_strike' => [
-                        'total_percent' => round($stats['total_crit'], 2),
-                        'base_percent' => round($stats['base_crit_chance'], 2),
-                        'from_agility_percent' => round($stats['crit_from_agi'], 2),
-                        'from_rating_percent' => round($stats['crit_percent_from_rating'], 2)
-                    ],
-                    'armor_from_agility' => (int)$stats['armor_from_agi'],
-                    'armor_penetration_percent' => round($stats['arp_percent'], 2),
-                    'hit_chance_percent' => round($stats['hit_percent'], 2),
-                    'expertise_percent' => round($stats['expertise_percent'], 2),
-                    'health_from_stamina' => (int)$stats['health_from_stamina'],
-                    'resilience' => [
-                        'crit_reduction_percent' => round($stats['resilience_crit_reduction'], 2),
-                        'pvp_damage_reduction_percent' => round($stats['resilience_pvp_damage_reduction'], 2),
-                        'crit_damage_reduction_percent' => round($stats['resilience_crit_damage_reduction'], 2)
-                    ]
-                ],
-                'formulas_used' => [
-                    'agility_to_ap' => '1 AGI = 1 AP',
-                    'strength_to_ap' => '1 STR = 2 AP',
-                    'agility_to_crit' => '83.3 AGI = 1% Crit',
-                    'agility_to_armor' => '1 AGI = 2 Armor',
-                    'stamina_to_health' => '1 STA = 10 Health',
-                    'hit_rating_conversion' => '32.79 Rating = 1% Hit',
-                    'crit_rating_conversion' => '45.91 Rating = 1% Crit',
-                    'arp_rating_conversion' => '13.99 Rating = 1% ArP',
-                    'resilience_conversion' => '94.3 Rating = 1% Resilience',
-                    'expertise_conversion' => '1 Point = 0.25% Reduction'
-                ]
-            ];
-            
-            header('Content-Type: application/json');
-            header('Content-Disposition: attachment; filename="feral_druid_build_' . date('Y-m-d_H-i-s') . '.json"');
-            echo json_encode($exportData, JSON_PRETTY_PRINT);
-            
-        } catch (\Exception $e) {
-            http_response_code(400);
-            echo json_encode(['error' => $e->getMessage()]);
-        }
-    }
-    
-    private function validateAndSanitizeInput(): array
-    {
-        $fields = ['agility', 'strength', 'base_ap', 'arp', 'resilience', 'stamina', 'hit', 'expertise', 'crit_rating'];
-        $input = [];
-        
-        foreach ($fields as $field) {
-            $value = filter_input(INPUT_POST, $field, FILTER_VALIDATE_INT, [
-                'options' => ['min_range' => 0, 'max_range' => $field === 'base_ap' ? 99999 : ($field === 'expertise' ? 99 : 9999)]
-            ]);
-            
-            if ($value === false) {
-                throw new \Exception("Invalid input for {$field}. Please check your entries.");
+            if (!$validation['valid']) {
+                $_SESSION['errors'] = $validation['errors'];
+                $_SESSION['error'] = 'Please fix the validation errors.';
+                header('Location: /');
+                exit;
             }
             
-            $input[$field] = $value;
+            // Calculate stats
+            $stats = $this->statCalculator->calculateStats($validation['data']);
+            
+            // Check for warnings
+            $warnings = $this->checkForWarnings($validation['data'], $stats);
+            
+            // Store results in session
+            $_SESSION['stats'] = $stats;
+            $_SESSION['input'] = $validation['data'];
+            
+            if (!empty($warnings)) {
+                $_SESSION['message'] = 'Calculations completed with warnings: ' . implode(' ', $warnings);
+            } else {
+                $_SESSION['message'] = 'Stats calculated successfully!';
+            }
+            
+            header('Location: /');
+            exit;
+            
+        } catch (\Exception $e) {
+            $_SESSION['error'] = 'Calculation failed: ' . $e->getMessage();
+            header('Location: /');
+            exit;
+        }
+    }
+
+    private function validateInput(array $data): array
+    {
+        $errors = [];
+        $validatedData = [];
+        
+        $rules = [
+            'agility' => ['required' => true, 'numeric' => true, 'min' => 0, 'max' => 9999],
+            'strength' => ['required' => true, 'numeric' => true, 'min' => 0, 'max' => 9999],
+            'base_ap' => ['required' => true, 'numeric' => true, 'min' => 0, 'max' => 9999],
+            'arp' => ['required' => true, 'numeric' => true, 'min' => 0, 'max' => 9999],
+            'resilience' => ['required' => true, 'numeric' => true, 'min' => 0, 'max' => 9999],
+            'stamina' => ['required' => true, 'numeric' => true, 'min' => 0, 'max' => 9999],
+            'hit' => ['required' => true, 'numeric' => true, 'min' => 0, 'max' => 9999],
+            'expertise' => ['required' => true, 'numeric' => true, 'min' => 0, 'max' => 9999],
+            'crit_rating' => ['required' => true, 'numeric' => true, 'min' => 0, 'max' => 9999],
+        ];
+        
+        foreach ($rules as $field => $fieldRules) {
+            $value = $data[$field] ?? null;
+            
+            if ($fieldRules['required'] && (is_null($value) || $value === '')) {
+                $errors[$field][] = ucfirst(str_replace('_', ' ', $field)) . ' is required.';
+                continue;
+            }
+            
+            if (!is_null($value) && $value !== '') {
+                if ($fieldRules['numeric'] && !is_numeric($value)) {
+                    $errors[$field][] = ucfirst(str_replace('_', ' ', $field)) . ' must be a number.';
+                    continue;
+                }
+                
+                $numValue = (float)$value;
+                
+                if (isset($fieldRules['min']) && $numValue < $fieldRules['min']) {
+                    $errors[$field][] = ucfirst(str_replace('_', ' ', $field)) . ' must be at least ' . $fieldRules['min'] . '.';
+                }
+                
+                if (isset($fieldRules['max']) && $numValue > $fieldRules['max']) {
+                    $errors[$field][] = ucfirst(str_replace('_', ' ', $field)) . ' must not exceed ' . $fieldRules['max'] . '.';
+                }
+                
+                if (empty($errors[$field])) {
+                    $validatedData[$field] = $numValue;
+                }
+            }
         }
         
-        return $input;
+        return [
+            'valid' => empty($errors),
+            'errors' => $errors,
+            'data' => $validatedData
+        ];
     }
     
-    private function renderView(string $view, array $data = []): string
+    private function checkForWarnings(array $input, array $stats): array
     {
-        extract($data);
-        ob_start();
-        include __DIR__ . "/../../resources/views/{$view}.php";
-        return ob_get_clean();
+        $warnings = [];
+        
+        // Hit cap warnings
+        if ($stats['hit_chance_pve'] > 8.0) {
+            $warnings[] = "Hit chance vs PvE targets ({$stats['hit_chance_pve']}%) exceeds the 8% cap. Consider reducing Hit Rating.";
+        }
+        
+        if ($stats['hit_chance_pvp'] > 5.0) {
+            $warnings[] = "Hit chance vs PvP targets ({$stats['hit_chance_pvp']}%) exceeds the 5% cap. Consider reducing Hit Rating.";
+        }
+        
+        // Expertise warnings
+        if ($input['expertise'] > 26) {
+            $warnings[] = "Expertise ({$input['expertise']}) exceeds the 26 point cap (6.5%). Excess expertise provides no benefit.";
+        }
+        
+        // Armor penetration warnings
+        if ($stats['armor_pen_percent'] > 100) {
+            $warnings[] = "Armor Penetration ({$stats['armor_pen_percent']}%) exceeds 100%. Consider redistributing stats.";
+        }
+        
+        // Low resilience warning for PvP
+        if ($input['resilience'] < 500) {
+            $warnings[] = "Low Resilience ({$input['resilience']}) may result in high vulnerability to critical strikes in PvP.";
+        }
+        
+        return $warnings;
+    }
+    
+    public function export()
+    {
+        try {
+            $data = $_POST;
+            
+            // Validate export data
+            $validation = $this->validateInput($data);
+            
+            if (!$validation['valid']) {
+                $_SESSION['error'] = 'Export failed: Invalid data provided.';
+                header('Location: ' . $_SERVER['HTTP_REFERER']);
+                exit;
+            }
+            
+            // Calculate stats for export
+            $stats = $this->statCalculator->calculateStats($validation['data']);
+            
+            $exportData = [
+                'character_stats' => $validation['data'],
+                'calculated_stats' => $stats,
+                'export_date' => date('Y-m-d H:i:s'),
+                'calculator_version' => '1.0.0'
+            ];
+            
+            $filename = 'feral_druid_stats_' . date('Y-m-d_H-i-s') . '.json';
+            
+            header('Content-Type: application/json');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            echo json_encode($exportData, JSON_PRETTY_PRINT);
+            exit;
+                
+        } catch (\Exception $e) {
+            $_SESSION['error'] = 'Export failed: ' . $e->getMessage();
+            header('Location: ' . $_SERVER['HTTP_REFERER']);
+            exit;
+        }
     }
 }
