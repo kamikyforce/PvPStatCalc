@@ -63,7 +63,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-
 // Show export button when stats are calculated
 function showExportButton() {
     const exportBtn = document.getElementById('exportBtn');

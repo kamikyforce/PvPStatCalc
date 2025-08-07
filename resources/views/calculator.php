@@ -17,17 +17,12 @@
 
     <!-- Visitor Counter - moved below navbar -->
     <!-- Visitor Counter with Real-Time Updates -->
+    <!-- Visitor Counter - simplified -->
     <div class="visitor-counter">
         <div class="visitor-header">
             <div style="text-align: center; margin-bottom: 8px;">
                 <strong>Visitors: <span class="total-visitors"><?= $total_visitors ?? 0 ?></span></strong>
-                <br>
-                <span class="online-status">
-                    🟢 <span id="online-count"><?= $online_visitors ?? 0 ?></span> online now
-                </span>
             </div>
-            <div class="connection-status connected">🟢 Live</div>
-            <div class="last-update">Last update: <?= date('H:i:s') ?></div>
         </div>
         
         <div class="visitor-list">
@@ -38,9 +33,6 @@
                             <span style="font-size: 16px; margin-right: 5px;"><?= $country['flag'] ?></span>
                             <span style="flex: 1;"><?= htmlspecialchars($country['name']) ?></span>
                             <span style="font-weight: bold; margin-left: 5px;"><?= $country['count'] ?></span>
-                            <?php if (isset($online_countries[$countryCode]) && $online_countries[$countryCode]['online_count'] > 0): ?>
-                                <span class="online-indicator animate-pulse">🟢<?= $online_countries[$countryCode]['online_count'] ?></span>
-                            <?php endif; ?>
                         </div>
                     </div>
                 <?php endforeach; ?>

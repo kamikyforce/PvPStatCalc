@@ -20,13 +20,10 @@ class StatCalculatorController
     {
         $visitorService = new VisitorCounterService();
         
-        // Record visitor and update online status
+        // Record visitor only (no online status)
         $visitor_stats = $visitorService->recordVisitor();
-        $visitorService->updateOnlineStatus();
         
         $total_visitors = $visitorService->getTotalVisitors();
-        $online_visitors = $visitorService->getTotalOnlineVisitors();
-        $online_countries = $visitorService->getOnlineVisitorsByCountry();
         
         require_once __DIR__ . '/../../resources/views/calculator.php';
     }

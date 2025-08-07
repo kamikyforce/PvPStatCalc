@@ -40,13 +40,10 @@ function sendHeartbeat() {
 try {
     $visitorService = new VisitorCounterService();
     
-    // Send initial data
-    $visitorService->updateOnlineStatus();
+    // Send initial data using available methods
     $initialData = [
         'total_visitors' => $visitorService->getTotalVisitors(),
-        'total_online' => $visitorService->getTotalOnlineVisitors(),
         'visitor_stats' => $visitorService->getVisitorStats(),
-        'online_countries' => $visitorService->getOnlineVisitorsByCountry(),
         'timestamp' => time()
     ];
     sendSSE($initialData, 'visitor_update');
@@ -72,13 +69,9 @@ try {
         
         // Update visitor data
         if (($currentTime - $lastUpdate) >= $updateInterval) {
-            $visitorService->updateOnlineStatus();
-            
             $data = [
                 'total_visitors' => $visitorService->getTotalVisitors(),
-                'total_online' => $visitorService->getTotalOnlineVisitors(),
                 'visitor_stats' => $visitorService->getVisitorStats(),
-                'online_countries' => $visitorService->getOnlineVisitorsByCountry(),
                 'timestamp' => $currentTime
             ];
             

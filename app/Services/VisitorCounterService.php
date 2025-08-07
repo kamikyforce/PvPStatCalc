@@ -6,13 +6,11 @@ class VisitorCounterService
 {
     private string $dataFile;
     private string $sessionFile;
-    private string $onlineFile;
     
     public function __construct()
     {
         $this->dataFile = __DIR__ . '/../../storage/visitors.json';
         $this->sessionFile = __DIR__ . '/../../storage/visitor_sessions.json';
-        $this->onlineFile = __DIR__ . '/../../storage/online_visitors.json';
         $this->ensureStorageExists();
         $this->purgeLocalVisitors();
     }
@@ -237,10 +235,6 @@ class VisitorCounterService
         if (!file_exists($this->sessionFile)) {
             file_put_contents($this->sessionFile, '{}');
         }
-        
-        if (!file_exists($this->onlineFile)) {
-            file_put_contents($this->onlineFile, '{}');
-        }
     }
     
     public function getTotalVisitors(): int
@@ -289,82 +283,5 @@ class VisitorCounterService
         }
         
         file_put_contents($this->sessionFile, json_encode($cleanedSessions, JSON_PRETTY_PRINT));
-    }
-    
-    public function updateOnlineStatus(): void
-    {
-        $ip = $this->getClientIP();
-        
-        // Skip local IPs
-        if ($this->isLocalIP($ip)) {
-            return;
-        }
-        
-        $country = $this->getCountryFromIP($ip);
-        if (!$country) {
-            return;
-        }
-        
-        $onlineVisitors = $this->getOnlineVisitors();
-        $currentTime = time();
-        
-        // Update this visitor's last seen time
-        $onlineVisitors[$ip] = [
-            'country' => $country,
-            'last_seen' => $currentTime,
-            'session_id' => session_id()
-        ];
-        
-        // Remove visitors who haven't been seen in the last 5 minutes
-        $this->cleanOfflineVisitors($onlineVisitors);
-        
-        file_put_contents($this->onlineFile, json_encode($onlineVisitors, JSON_PRETTY_PRINT));
-    }
-    
-    private function cleanOfflineVisitors(array &$onlineVisitors): void
-    {
-        $currentTime = time();
-        $offlineThreshold = 5 * 60; // 5 minutes
-        
-        foreach ($onlineVisitors as $ip => $data) {
-            if (($currentTime - $data['last_seen']) > $offlineThreshold) {
-                unset($onlineVisitors[$ip]);
-            }
-        }
-    }
-    
-    public function getOnlineVisitors(): array
-    {
-        if (!file_exists($this->onlineFile)) {
-            return [];
-        }
-        
-        $data = json_decode(file_get_contents($this->onlineFile), true);
-        return $data ?: [];
-    }
-    
-    public function getOnlineVisitorsByCountry(): array
-    {
-        $onlineVisitors = $this->getOnlineVisitors();
-        $countries = [];
-        
-        foreach ($onlineVisitors as $visitor) {
-            $countryCode = $visitor['country']['code'];
-            if (!isset($countries[$countryCode])) {
-                $countries[$countryCode] = [
-                    'name' => $visitor['country']['name'],
-                    'flag' => $visitor['country']['flag'],
-                    'online_count' => 0
-                ];
-            }
-            $countries[$countryCode]['online_count']++;
-        }
-        
-        return $countries;
-    }
-    
-    public function getTotalOnlineVisitors(): int
-    {
-        return count($this->getOnlineVisitors());
     }
 }
