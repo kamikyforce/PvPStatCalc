@@ -51,7 +51,6 @@ if (preg_match('/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/i', $re
 // Application routing
 try {
     require_once __DIR__ . '/../app/Services/StatCalculatorService.php';
-    require_once __DIR__ . '/../app/Services/VisitorCounterService.php';
     require_once __DIR__ . '/../app/Controllers/StatCalculatorController.php';
     require_once __DIR__ . '/../app/Controllers/MacrosController.php';
     

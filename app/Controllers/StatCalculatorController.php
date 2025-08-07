@@ -15,6 +15,31 @@ class StatCalculatorController
     
     public function index(): void
     {
+        // Extract calculation results from session if available
+        $stats = null;
+        $warnings = null;
+        $input = null;
+        $error = null;
+        
+        if (isset($_SESSION['calculation_results'])) {
+            $results = $_SESSION['calculation_results'];
+            
+            if (isset($results['error'])) {
+                $error = $results['error'];
+            } else {
+                $stats = $results['stats'] ?? null;
+                $warnings = $results['warnings'] ?? null;
+                $input = $results['input'] ?? null;
+            }
+            
+            // Clear session data after use to prevent stale results
+            unset($_SESSION['calculation_results']);
+        }
+        
+        // Set page title and subtitle
+        $title = 'PvP Calculator';
+        $subtitle = 'WotLK 3.3.5a Feral Druid Statistics Calculator';
+        
         require_once __DIR__ . '/../../resources/views/calculator.php';
     }
     
