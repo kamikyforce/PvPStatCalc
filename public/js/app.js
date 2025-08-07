@@ -132,7 +132,27 @@ function exportToJson() {
     document.body.removeChild(exportForm);
 }
 
+// Image preloading logic
 document.addEventListener('DOMContentLoaded', function() {
+    // Preload background image
+    const img = new Image();
+    img.onload = function() {
+        document.body.classList.add('loaded');
+    };
+    img.onerror = function() {
+        // Fallback: show background anyway after 2 seconds
+        setTimeout(() => {
+            document.body.classList.add('loaded');
+        }, 2000);
+    };
+    img.src = '/image.png';
+    
+    // Fallback timeout in case image takes too long
+    setTimeout(() => {
+        if (!document.body.classList.contains('loaded')) {
+            document.body.classList.add('loaded');
+        }
+    }, 3000);
     const form = document.getElementById('statForm');
     const inputs = form.querySelectorAll('input[type="number"]');
     

@@ -5,9 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'PvP Calculator')</title>
+    
+    <!-- Preload background image for faster loading -->
+    <link rel="preload" href="/image.png" as="image">
+    
     <link rel="stylesheet" href="/css/app.css">
     <!-- Add Toastr for notifications -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <!-- Remova o Toastr e use Notyf -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
     <!-- Add SweetAlert2 for better alerts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
