@@ -18,13 +18,13 @@ class StatCalculatorRequest extends FormRequest
         return [
             'agility' => [
                 'required',
-                'numeric',
+                'integer',  // Changed from 'numeric' to 'integer'
                 'min:0',
                 'max:9999',
             ],
             'strength' => [
                 'required',
-                'numeric', 
+                'integer', 
                 'min:0',
                 'max:9999',
             ],

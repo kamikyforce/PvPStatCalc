@@ -83,8 +83,13 @@
                     placeholder="{{ $field['placeholder'] }}"
                     min="{{ $field['min'] }}"
                     max="{{ $field['max'] }}"
+                    step="1"
+                    pattern="[0-9]*"
+                    inputmode="numeric"
                     value="{{ old($fieldName, $input[$fieldName] ?? '') }}"
                     class="{{ $errors->has($fieldName) ? 'is-invalid' : '' }}"
+                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                    onkeypress="return event.charCode >= 48 && event.charCode <= 57"
                     required
                 >
                 
