@@ -15,31 +15,6 @@
         </ul>
     </nav>
 
-    <!-- Visitor Counter - moved below navbar -->
-    <!-- Visitor Counter with Real-Time Updates -->
-    <!-- Visitor Counter - simplified -->
-    <div class="visitor-counter">
-        <div class="visitor-header">
-            <div style="text-align: center; margin-bottom: 8px;">
-                <strong>Visitors: <span class="total-visitors"><?= $total_visitors ?? 0 ?></span></strong>
-            </div>
-        </div>
-        
-        <div class="visitor-list">
-            <?php if (!empty($visitor_stats)): ?>
-                <?php foreach ($visitor_stats as $countryCode => $country): ?>
-                    <div class="country-item" data-country="<?= $countryCode ?>">
-                        <div style="display: flex; align-items: center; margin: 2px 0;">
-                            <span style="font-size: 16px; margin-right: 5px;"><?= $country['flag'] ?></span>
-                            <span style="flex: 1;"><?= htmlspecialchars($country['name']) ?></span>
-                            <span style="font-weight: bold; margin-left: 5px;"><?= $country['count'] ?></span>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </div>
-    </div>
-
     <div class="container">
         <div class="header">
             <h1><?= htmlspecialchars($title ?? 'PvP Calculator') ?></h1>

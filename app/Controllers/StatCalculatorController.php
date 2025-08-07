@@ -3,28 +3,18 @@
 namespace App\Controllers;
 
 use App\Services\StatCalculatorService;
-use App\Services\VisitorCounterService;
 
 class StatCalculatorController
 {
     private StatCalculatorService $statCalculator;
-    private VisitorCounterService $visitorCounter;
     
     public function __construct(StatCalculatorService $statCalculator)
     {
         $this->statCalculator = $statCalculator;
-        $this->visitorCounter = new VisitorCounterService();
     }
     
     public function index(): void
     {
-        $visitorService = new VisitorCounterService();
-        
-        // Record visitor only (no online status)
-        $visitor_stats = $visitorService->recordVisitor();
-        
-        $total_visitors = $visitorService->getTotalVisitors();
-        
         require_once __DIR__ . '/../../resources/views/calculator.php';
     }
     
@@ -49,8 +39,8 @@ class StatCalculatorController
             ];
         }
         
-        // Redirect to GET to prevent resubmission
-        header('Location: /', true, 303);
+        // Redirect back to prevent form resubmission
+        header('Location: /');
         exit;
     }
     
